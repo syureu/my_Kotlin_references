@@ -5,21 +5,8 @@ class Node(var key: Int) {
     var cnt = 0
 }
 
-class Splay(val N: Int, val inputs: IntArray) {
+class Splay {
     var root: Node? = null
-    var pointer = Array<Node?>(N) { null }
-
-    fun init() {
-        var x = Node(inputs[0])
-        root = x
-        pointer[0] = x
-        for (i in 1 until N) {
-            x.r = Node(inputs[i])
-            x = x.r!!
-            pointer[i] = x
-        }
-        splay(pointer[N / 2]!!)
-    }
 
     fun rotate(x: Node) {
         if (x.p == null) return
@@ -57,6 +44,78 @@ class Splay(val N: Int, val inputs: IntArray) {
             rotate(x)
         }
         if (g == null) root = x
+    }
+
+    fun insert(key: Int) {
+        if (root == null) {
+            root = Node(key)
+            return
+        }
+        var p = root
+        var pp: Node?
+        while (true) {
+            if (key == p!!.key) return
+            if (key < p.key) {
+                if (p.l == null) {
+                    p.l = Node(key)
+                    splay(p.l!!)
+                    return
+                }
+                p = p.l
+            } else {
+                if (p.r == null) {
+                    p.r = Node(key)
+                    splay(p.r!!)
+                    return
+                }
+                p = p.r
+            }
+        }
+    }
+
+    fun find(key: Int): Boolean {
+        if (root == null) return false
+        var p = root
+        while (p != null) {
+            if (key == p.key) break
+            p = if (key < p.key) {
+                if (p.l == null) break
+                p.l
+            } else {
+                if (p.r == null) break
+                p.r
+            }
+        }
+        splay(p!!)
+        return key == p.key
+    }
+
+    fun delete(key: Int) {
+        if (!find(key)) return
+        var p = root
+        when {
+            p!!.l != null && p!!.r != null -> {
+                root = p.l
+                root!!.p = null
+                var x = root
+                while (x!!.r != null) x = x.r
+                x.r = p.r
+                p.r!!.p = x
+                splay(x)
+                return
+            }
+            p.l != null -> {
+                root = p.l
+                root!!.p = null
+                return
+            }
+            p.r != null -> {
+                root = p.r
+                root!!.p = null
+                return
+            }
+            else -> root = null
+        }
     }
 
     fun update(x: Node) {
