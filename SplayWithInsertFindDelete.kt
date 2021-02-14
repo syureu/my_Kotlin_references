@@ -4,7 +4,7 @@ class Node(var key: Int) {
     var p: Node? = null
 }
 
-class Splay(N: Int) {
+class Splay {
     var root: Node? = null
     // var pointer = Array<Node?>(N) { null }
 
