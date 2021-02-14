@@ -69,7 +69,7 @@ class Splay(val N: Int, val inputs: IntArray) {
         var x = root
         var tmpK = k
         while (true) {
-            while (x!!.l != null && x.l!!.cnt > k) x = x.l
+            while (x!!.l != null && x.l!!.cnt > tmpK) x = x.l
             if (x.l != null) tmpK -= x.l!!.cnt
             if (tmpK-- == 0) break;
             x = x.r
