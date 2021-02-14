@@ -11,20 +11,22 @@ class Splay(val N: Int, val inputs: LongArray) {
     var root: Node? = null
     var pointer = Array<Node?>(N + 2) { null }
 
-    fun init() {
-        var x = Node(Long.MIN_VALUE)
+    init {
+        var x = Node(Int.MIN_VALUE + 1L)
         root = x
         pointer[0] = x
         for (i in 0 until N) {
             x.r = Node(inputs[i])
+            x.r!!.p = x
             x = x.r!!
             pointer[i + 1] = x
         }
-        x.r = Node(Long.MAX_VALUE)
+        x.r = Node(Int.MAX_VALUE + 0L)
+        x.r!!.p = x
         pointer[N + 1] = x.r
         root!!.dummy = true
         x.r!!.dummy = true
-        for (i in N downTo 1) update(pointer[i]!!)
+        for (i in N + 1 downTo 0) update(pointer[i]!!)
         splay(pointer[N / 2]!!)
     }
 
