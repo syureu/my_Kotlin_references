@@ -6,7 +6,6 @@ class Node {
 
 class Splay {
     var root: Node? = null
-    // var pointer = Array<Node?>(N) { null }
 
     fun rotate(x: Node) {
         if (x.p == null) return
