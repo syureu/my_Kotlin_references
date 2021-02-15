@@ -87,7 +87,7 @@ class Splay(val N: Int, val inputs: LongArray) {
         while (true) {
             while (x!!.l != null && x.l!!.cnt > tmpK) x = x.l
             if (x.l != null) tmpK -= x.l!!.cnt
-            if (tmpK-- == 0) break;
+            if (tmpK-- == 0) break
             x = x.r
         }
         splay(x!!)

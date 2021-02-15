@@ -92,7 +92,7 @@ class Splay(N: Int, inputs: LongArray) {
                 prop(x!!)
             }
             if (x.l != null) tmpK -= x.l!!.cnt
-            if (tmpK-- == 0) break;
+            if (tmpK-- == 0) break
             x = x.r
             prop(x!!)
         }
