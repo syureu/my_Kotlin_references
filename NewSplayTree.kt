@@ -1,23 +1,36 @@
-fun main() {
+import kotlin.math.*
 
+fun main() {
 }
 
 class SplayTree {
-    private var root: Node? = null
+    var root: Node? = null
+    lateinit var nodePointer: Array<Node?>
 
-    private fun updateSize(target: Node) {
+    private fun update(target: Node) {
         target.size = 1
+        target.sum = 0L + target.value
+        target.max = target.value
+        target.min = target.value
         if (target.left != null) {
             target.size += target.left!!.size
+            target.sum += target.left!!.sum
+            target.max = max(target.max, target.left!!.max)
+            target.min = min(target.min, target.left!!.min)
         }
         if (target.right != null) {
             target.size += target.right!!.size
+            target.sum += target.right!!.sum
+            target.max = max(target.max, target.right!!.max)
+            target.min = min(target.min, target.right!!.min)
         }
     }
 
     private fun rotate(target: Node) {
         val parent = target.parent!! // splay시 parent 없는 target의 rotate는 수행하지 않는다
         val xChild: Node?
+        propFlip(parent)
+        propFlip(target)
         if (target == parent.left) {
             xChild = target.right
             parent.left = xChild
@@ -42,47 +55,96 @@ class SplayTree {
         } else {
             root = target
         }
-        updateSize(parent)
-        updateSize(target)
+        update(parent)
+        update(target)
     }
 
-    fun splay(target: Node) {
-        while (target.parent != null) {
-            val parent = target.parent!!
-            val grandParent = parent.parent
-            if (grandParent != null) {
-                rotate(if ((target == parent.left) == (parent == grandParent.left)) parent else target)
-            }
-            rotate(target)
+    private fun propSum(target: Node) {
+        target.value += target.lazy
+        if (target.left != null) {
+            target.left!!.lazy += target.lazy
+            target.left!!.sum += target.left!!.size * target.lazy
         }
+        if (target.right != null) {
+            target.right!!.lazy += target.lazy
+            target.right!!.sum += target.right!!.size * target.lazy
+        }
+        target.lazy = 0
     }
 
-    fun insert(key: Int) {
-        if (root == null) { // 빈 스플레이 트리
-            root = Node(key)
+    private fun propFlip(target: Node) {
+        if (!target.flip) {
             return
         }
-        var parent = root
-        while (true) {
-            if (key == parent!!.key) { // 이미 키가 있음
-                return
+        val leftNode = target.left
+        target.left = target.right
+        target.right = leftNode
+
+        target.flip = false
+
+        if (target.left != null) {
+            target.left!!.flip = !target.left!!.flip
+        }
+        if (target.right != null) {
+            target.right!!.flip = !target.right!!.flip
+        }
+    }
+
+    fun init(inputs: LongArray) {
+        nodePointer = Array(inputs.size + 2) { null }
+
+        nodePointer[0] = insert(-1, 0)
+        inputs.forEachIndexed { index, i -> nodePointer[index + 1] = insert(index, i) }
+        nodePointer[inputs.size + 1] = insert(inputs.size, 0)
+
+        for (node in nodePointer) {
+            update(node as Node)
+        }
+        splay(nodePointer[inputs.size shr 1]!!)
+    }
+
+    fun splay(target: Node, grandParent: Node? = null) {
+        while (target.parent != grandParent) {
+            val pointer = target.parent!!
+            if (pointer.parent == grandParent) {
+                rotate(target)
+                break
             }
-            if (key < parent.key) { // 왼쪽으로 가야한다면
-                if (parent.left == null) { // 왼쪽이 비었다면
-                    parent.left = Node(key) // 왼쪽에 삽입
-                    parent.left!!.parent = parent
-                    splay(parent.left!!)
-                    return
+            val pointerParent = pointer.parent!!
+            rotate(if ((target == pointer.left) == (pointer == pointerParent.left)) pointer else target)
+            rotate(target)
+        }
+        if (grandParent == null) {
+            root = target
+        }
+    }
+
+    fun insert(key: Int, value: Long): Node {
+        if (root == null) { // 빈 스플레이 트리
+            root = Node(key, value)
+            return root as Node
+        }
+        var pointer = root
+        while (true) {
+            if (key == pointer!!.key) { // 이미 키가 있음
+                return pointer
+            }
+            if (key < pointer.key) { // 왼쪽으로 가야한다면
+                if (pointer.left == null) { // 왼쪽이 비었다면
+                    pointer.left = Node(key, value) // 왼쪽에 삽입
+                    pointer.left!!.parent = pointer
+                    splay(pointer.left!!)
+                    return root as Node
                 }
-                parent = parent.left // 안비었다면 왼쪽을 부모로 다시
+                pointer = pointer.left // 안비었다면 왼쪽을 부모로 다시
             } else {
-                if (parent.right == null) { // 오른쪽에 대하여 같이
-                    parent.right = Node(key)
-                    parent.right!!.parent = parent
-                    splay(parent.right!!)
-                    return
+                if (pointer.right == null) { // 오른쪽에 대하여 같이
+                    pointer.right = Node(key, value)
+                    pointer.right!!.parent = pointer
+                    splay(pointer.right!!)
+                    return root as Node
                 }
-                parent = parent.right
+                pointer = pointer.right
             }
         }
     }
@@ -91,25 +153,25 @@ class SplayTree {
         if (root == null) {
             return null
         }
-        var parent = root
-        while (parent != null) {
-            if (key == parent.key) {
+        var pointer = root
+        while (pointer != null) {
+            if (key == pointer.key) {
                 break
             }
-            if (key < parent.key) {
-                if (parent.left == null) {
+            if (key < pointer.key) {
+                if (pointer.left == null) {
                     break
                 }
-                parent = parent.left
+                pointer = pointer.left
             } else {
-                if (parent.right == null) {
+                if (pointer.right == null) {
                     break
                 }
-                parent = parent.right
+                pointer = pointer.right
             }
         }
-        splay(parent!!)
-        return if (key == parent.key) parent else null
+        splay(pointer!!)
+        return if (key == pointer.key) pointer else null
     }
 
     fun delete(key: Int) {
@@ -138,12 +200,16 @@ class SplayTree {
         }
     }
 
-    fun kth(k: Int) { // k is 0-based
+    fun kth(k: Int): Node {
         var k = k
         var target = root
+        propSum(target!!)
+        propFlip(target!!)
         while (true) {
             while (target!!.left != null && target.left!!.size > k) {
                 target = target.left
+                propSum(target!!)
+                propFlip(target!!)
             }
             if (target.left != null) {
                 k -= target.left!!.size
@@ -152,15 +218,46 @@ class SplayTree {
                 break
             }
             target = target.right
+            propSum(target!!)
+            propFlip(target!!)
         }
         splay(target!!)
+        return target
     }
 
-    class Node(key: Int) {
+    fun range(left: Int, right: Int): Node? { // [left, right]
+        val rightOfRight = kth(right + 1)
+        val leftOfLeft = kth(left - 1)
+        splay(rightOfRight, leftOfLeft)
+        return root?.right?.left
+    }
+
+    fun flip(left: Int, right: Int) { // [left, right]
+        flip(range(left, right)!!)
+    }
+
+    fun flip(target: Node) {
+        target.flip = !target.flip
+    }
+
+    fun shift(left: Int, right: Int, count: Int) {
+        if (count == 0) {
+            return
+        }
+        flip(left, right)
+        flip(left, left + count - 1)
+        flip(left + count, right)
+    }
+
+    class Node(var key: Int, var value: Long) {
         var left: Node? = null
         var right: Node? = null
         var parent: Node? = null
-        var key = key
         var size = 1
+        var sum = value
+        var lazy = 0L
+        var max = value
+        var min = value
+        var flip = false
     }
 }
